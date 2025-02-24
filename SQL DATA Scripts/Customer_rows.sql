@@ -1,0 +1,1 @@
+INSERT INTO "public"."Customer" ("CustomerId", "FirstName", "LastName", "Address", "Phone", "StartDate") VALUES ('1', 'Alice', 'Brown', '321 Cedar Ln, NY', '555-1111', '2023-08-10'), ('2', 'Bob', 'Green', '654 Birch Blvd, LA', '555-2222', '2022-05-05'), ('3', 'Charlie', 'Davis', '987 Maple Dr, TX', '555-3333', '2024-01-01');
