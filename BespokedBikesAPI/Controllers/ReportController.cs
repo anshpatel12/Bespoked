@@ -31,10 +31,25 @@ namespace BespokedBikesAPI.Controllers
                 string query = @"
                     SELECT 
                         sp.""FirstName"", sp.""LastName"", 
-                        SUM(p.""SalePrice"" * p.""CommissionPct"" / 100 * s.""QuantitySold"") AS total_commission 
+                        SUM(
+                            CASE 
+                                WHEN d.""DiscountPct"" IS NOT NULL 
+                                THEN p.""SalePrice"" * (1 - d.""DiscountPct"" / 100) * s.""QuantitySold""
+                                ELSE p.""SalePrice"" * s.""QuantitySold""
+                            END
+                        ) AS total_sales_revenue,
+                        SUM(
+                            CASE 
+                                WHEN d.""DiscountPct"" IS NOT NULL 
+                                THEN p.""SalePrice"" * (1 - d.""DiscountPct"" / 100) * s.""QuantitySold"" * (p.""CommissionPct"" / 100)
+                                ELSE p.""SalePrice"" * s.""QuantitySold"" * (p.""CommissionPct"" / 100)
+                            END
+                        ) AS total_commission
                     FROM ""Sales"" s
                     JOIN ""Products"" p ON s.""ProductId"" = p.""ProductId""
                     JOIN ""Salesperson"" sp ON s.""SalespersonId"" = sp.""SalespersonId""
+                    LEFT JOIN ""Discount"" d ON p.""ProductId"" = d.""ProductId"" 
+                        AND s.""SaleDate"" BETWEEN d.""BeginDate"" AND d.""EndDate""
                     WHERE EXTRACT(YEAR FROM s.""SaleDate"") = @year
                         AND EXTRACT(QUARTER FROM s.""SaleDate"") = @quarter
                     GROUP BY sp.""FirstName"", sp.""LastName"";";
@@ -55,7 +70,8 @@ namespace BespokedBikesAPI.Controllers
                             reportData.Add(new
                             {
                                 Salesperson = $"{reader.GetString(0)} {reader.GetString(1)}",
-                                TotalCommission = reader.GetDouble(2)
+                                TotalSalesRevenue = reader.GetDouble(2),
+                                TotalCommission = reader.GetDouble(3)
                             });
                         }
                     }
